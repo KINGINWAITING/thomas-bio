@@ -1,0 +1,43 @@
+.metallic-text {
+  background: linear-gradient(
+    90deg,
+    #e6e9f0 0%,
+    #e6e9f0 5%,
+    #f8f9fd 10%,
+    #e6e9f0 20%,
+    #d1d8e0 30%,
+    #e6e9f0 40%,
+    #f8f9fd 50%,
+    #e6e9f0 60%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+  display: inline-block;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* Light theme text adjustments */
+:root .metallic-text,
+.light .metallic-text {
+  color: #000000;
+  -webkit-text-fill-color: #000000;
+  background: none;
+  text-shadow: none;
+}
+
+/* Dark theme text effects */
+.dark .metallic-text {
+  background: linear-gradient(145deg, #d4a14a, #f0c674);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 10px rgba(212, 161, 74, 0.3);
+}
+
+/* Ensure text remains visible during animation */
+.typing-text-container {
+  min-height: 1.5em;
+}

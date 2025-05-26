@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import modular stylesheets */
+@import '../styles/theme.css';
+@import '../styles/animations.css';
+@import '../styles/typography.css';
+@import '../styles/utils.css';
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

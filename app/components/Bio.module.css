@@ -1,0 +1,40 @@
+.bioContainer {
+  @apply relative w-full max-w-5xl mx-auto px-4 py-8;
+}
+
+.profileSection {
+  @apply flex flex-col md:flex-row items-center gap-8;
+}
+
+.textContent {
+  @apply space-y-4;
+}
+
+.name {
+  @apply text-4xl md:text-5xl font-bold tracking-tight;
+}
+
+.title {
+  @apply text-xl md:text-2xl text-muted-foreground;
+}
+
+.description {
+  @apply text-lg leading-relaxed max-w-2xl;
+}
+
+.links {
+  @apply flex gap-4 mt-6;
+}
+
+.link {
+  @apply inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors;
+}
+
+/* Animation classes */
+.fadeIn {
+  composes: fade-in from '../../styles/animations.css';
+}
+
+.fadeInUp {
+  composes: fade-in-up from '../../styles/animations.css';
+}

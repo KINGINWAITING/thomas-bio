@@ -1,0 +1,25 @@
+/* Utility classes for layout and spacing */
+.main-padding {
+  @apply pt-8 md:pt-12;
+}
+
+/* Golden orb effect */
+.golden-orb {
+  @apply rounded-full;
+  background: radial-gradient(
+    circle,
+    rgba(224, 176, 94, 0.6) 0%,
+    rgba(193, 138, 56, 0.3) 40%,
+    transparent 70%
+  );
+  filter: blur(30px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Font rendering optimizations */
+.optimize-text {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}

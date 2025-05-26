@@ -1,0 +1,31 @@
+.container {
+  @apply relative;
+}
+
+.photo {
+  @apply rounded-full overflow-hidden relative z-10;
+  composes: float-animation from '../../styles/animations.css';
+}
+
+.orb {
+  @apply absolute -inset-4 z-0;
+  composes: golden-orb from '../../styles/utils.css';
+  composes: pulse-gold from '../../styles/animations.css';
+}
+
+.wrapper {
+  @apply relative inline-block;
+}
+
+/* Responsive sizes */
+.sm {
+  @apply w-32 h-32;
+}
+
+.md {
+  @apply w-40 h-40;
+}
+
+.lg {
+  @apply w-48 h-48;
+}
