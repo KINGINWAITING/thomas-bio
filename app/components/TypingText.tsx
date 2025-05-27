@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 
 interface TypingTextProps {
   text: string;
@@ -20,81 +20,64 @@ export function TypingText({
   startAnimation = true
 }: TypingTextProps) {
   const [isMounted, setIsMounted] = useState(false);
-  const [showCursor, setShowCursor] = useState(false);
   const [displayText, setDisplayText] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
   
-  // Reset display text when text prop changes
+  // Memoize the final text to avoid recalculations
+  const finalText = useMemo(() => text, [text]);
+  
+  // Reset when text changes
   useEffect(() => {
     setDisplayText('');
-    setCurrentIndex(0);
-  }, [text]);
-  
-  // Create animated characters with wave effect
-  const renderAnimatedText = (content: string) => {
-    return content.split('').map((char, i) => {
-      const isVisible = i < displayText.length;
-      
-      return (
-        <span 
-          key={i}
-          style={{
-            animation: isVisible ? 'wave 2s ease-in-out infinite' : 'none',
-            animationDelay: isVisible ? `${i * 0.03}s` : '0s',
-            opacity: isVisible ? 1 : 0,
-            transition: 'opacity 0.1s ease-out',
-            verticalAlign: 'top', // Prevent layout shifts
-          }}
-        >
-          {char}
-        </span>
-      );
-    });
-  };
+    setIsComplete(false);
+  }, [finalText]);
 
-  // Set mounted state after component mounts on client
+  // Set mounted state
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Handle animation start with delay
+  // Optimized typing animation using requestAnimationFrame for better performance
   useEffect(() => {
-    if (!isMounted || !startAnimation) return;
+    if (!isMounted || !startAnimation || isComplete) return;
     
-    const timer = setTimeout(() => {
-      setIsAnimating(true);
-      setShowCursor(true);
+    let timeoutId: NodeJS.Timeout;
+    let rafId: number;
+    let startTime: number;
+    let currentIndex = 0;
+    
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const targetIndex = Math.min(Math.floor(elapsed / speed), finalText.length);
+      
+      if (targetIndex > currentIndex) {
+        currentIndex = targetIndex;
+        setDisplayText(finalText.slice(0, currentIndex));
+      }
+      
+      if (currentIndex < finalText.length) {
+        rafId = requestAnimationFrame(animate);
+      } else {
+        setIsComplete(true);
+        onComplete?.();
+      }
+    };
+    
+    // Start animation after delay
+    timeoutId = setTimeout(() => {
+      startTime = Date.now();
+      rafId = requestAnimationFrame(animate);
     }, delay);
 
-    return () => clearTimeout(timer);
-  }, [delay, isMounted, startAnimation]);
-
-  // Handle typing animation
-  useEffect(() => {
-    if (!isAnimating || !isMounted || !startAnimation) return;
-
-    let timeout: NodeJS.Timeout;
-    
-    if (currentIndex < text.length) {
-      timeout = setTimeout(() => {
-        setDisplayText(prev => prev + text[currentIndex]);
-        setCurrentIndex(prev => prev + 1);
-      }, speed);
-    } else if (onComplete && showCursor) {
-      // Remove the cursor immediately and trigger completion
-      setShowCursor(false);
-      onComplete();
-    }
-
     return () => {
-      if (timeout) clearTimeout(timeout);
+      clearTimeout(timeoutId);
+      if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [currentIndex, text, speed, isAnimating, isMounted, onComplete, showCursor, startAnimation]);
+  }, [finalText, speed, delay, isMounted, startAnimation, onComplete, isComplete]);
 
-  // On initial render, show nothing (will be replaced by client-side render)
+  // Show nothing during SSR
   if (!isMounted) {
-    return <span className={`opacity-0 ${className}`}>{text}</span>;
+    return <span className={`opacity-0 ${className}`} aria-hidden="true">{finalText}</span>;
   }
 
   return (
@@ -105,8 +88,16 @@ export function TypingText({
         overflowWrap: 'break-word',
       }}
     >
-      {renderAnimatedText(displayText)}
-      {showCursor && <span className="animate-pulse">|</span>}
+      {displayText}
+      {!isComplete && (
+        <span 
+          className="inline-block w-[2px] h-[1em] bg-current ml-[1px] animate-pulse"
+          style={{ verticalAlign: 'baseline' }}
+          aria-hidden="true"
+        >
+          |
+        </span>
+      )}
     </span>
   );
 }
