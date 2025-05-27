@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 interface TypingTextProps {
   text: string;
@@ -14,90 +14,110 @@ interface TypingTextProps {
 export function TypingText({ 
   text, 
   className = '', 
-  speed = 20, 
+  speed = 50, // Default to 50ms per character for smooth animation
   delay = 0,
   onComplete,
   startAnimation = true
 }: TypingTextProps) {
-  const [isMounted, setIsMounted] = useState(false);
-  const [displayText, setDisplayText] = useState('');
-  const [isComplete, setIsComplete] = useState(false);
+  const [displayedText, setDisplayedText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
+  const [showCursor, setShowCursor] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const delayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const completeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Memoize the final text to avoid recalculations
-  const finalText = useMemo(() => text, [text]);
-  
-  // Reset when text changes
+  // Reset animation when text changes
   useEffect(() => {
-    setDisplayText('');
-    setIsComplete(false);
-  }, [finalText]);
+    // Clear any existing timers
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (delayTimeoutRef.current) clearTimeout(delayTimeoutRef.current);
+    if (completeTimeoutRef.current) clearTimeout(completeTimeoutRef.current);
+    
+    // Reset state
+    setDisplayedText('');
+    setCurrentIndex(0);
+    setIsTyping(false);
+    setShowCursor(false);
+  }, [text]);
 
-  // Set mounted state
+  // Handle the typing animation
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    if (!startAnimation) return;
 
-  // Optimized typing animation using requestAnimationFrame for better performance
-  useEffect(() => {
-    if (!isMounted || !startAnimation || isComplete) return;
-    
-    let timeoutId: NodeJS.Timeout;
-    let rafId: number;
-    let startTime: number;
-    let currentIndex = 0;
-    
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const targetIndex = Math.min(Math.floor(elapsed / speed), finalText.length);
-      
-      if (targetIndex > currentIndex) {
-        currentIndex = targetIndex;
-        setDisplayText(finalText.slice(0, currentIndex));
-      }
-      
-      if (currentIndex < finalText.length) {
-        rafId = requestAnimationFrame(animate);
-      } else {
-        setIsComplete(true);
-        onComplete?.();
-      }
-    };
-    
     // Start animation after delay
-    timeoutId = setTimeout(() => {
-      startTime = Date.now();
-      rafId = requestAnimationFrame(animate);
+    delayTimeoutRef.current = setTimeout(() => {
+      setShowCursor(true);
+      setIsTyping(true);
+      
+      // Use setInterval for consistent timing
+      intervalRef.current = setInterval(() => {
+        setCurrentIndex(prevIndex => {
+          if (prevIndex >= text.length) {
+            // Animation complete
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+              intervalRef.current = null;
+            }
+            setIsTyping(false);
+            
+            // Hide cursor after a short delay
+            completeTimeoutRef.current = setTimeout(() => {
+              setShowCursor(false);
+              onComplete?.();
+            }, 500);
+            
+            return prevIndex;
+          }
+          
+          // Update displayed text
+          const newIndex = prevIndex + 1;
+          setDisplayedText(text.slice(0, newIndex));
+          return newIndex;
+        });
+      }, speed);
     }, delay);
 
+    // Cleanup
     return () => {
-      clearTimeout(timeoutId);
-      if (rafId) cancelAnimationFrame(rafId);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (delayTimeoutRef.current) clearTimeout(delayTimeoutRef.current);
+      if (completeTimeoutRef.current) clearTimeout(completeTimeoutRef.current);
     };
-  }, [finalText, speed, delay, isMounted, startAnimation, onComplete, isComplete]);
-
-  // Show nothing during SSR
-  if (!isMounted) {
-    return <span className={`opacity-0 ${className}`} aria-hidden="true">{finalText}</span>;
-  }
+  }, [text, speed, delay, startAnimation, onComplete]);
 
   return (
     <span 
-      className={`inline-block w-full ${className}`}
+      className={`${className}`}
       style={{ 
-        wordWrap: 'break-word', 
+        display: 'inline',
+        wordWrap: 'break-word',
         overflowWrap: 'break-word',
       }}
     >
-      {displayText}
-      {!isComplete && (
+      <span style={{ whiteSpace: 'pre-wrap' }}>
+        {displayedText}
+      </span>
+      {showCursor && (
         <span 
-          className="inline-block w-[2px] h-[1em] bg-current ml-[1px] animate-pulse"
-          style={{ verticalAlign: 'baseline' }}
+          className={`inline-block w-[2px] h-[1.1em] bg-current ml-[1px] ${isTyping ? 'animate-blink' : ''}`}
+          style={{ 
+            verticalAlign: 'text-bottom',
+            opacity: isTyping ? 1 : 0,
+            transition: 'opacity 0.3s ease-out'
+          }}
           aria-hidden="true"
-        >
-          |
-        </span>
+        />
       )}
+      <style jsx>{`
+        @keyframes blink {
+          0%, 49% { opacity: 1; }
+          50%, 100% { opacity: 0; }
+        }
+        .animate-blink {
+          animation: blink 1s infinite;
+        }
+      `}</style>
     </span>
   );
 }
