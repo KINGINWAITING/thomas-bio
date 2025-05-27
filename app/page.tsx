@@ -19,7 +19,7 @@ import {
   Users,
 } from "lucide-react"
 import { useTheme } from 'next-themes'
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { TypingText } from "./components/TypingText";
 import { Space_Grotesk } from 'next/font/google'
 
@@ -45,7 +45,20 @@ export default function ThomasBio() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([])
-  const [currentParagraph, setCurrentParagraph] = useState(0)
+  const [currentParagraph, setCurrentParagraph] = useState(-1) // Start at -1 so first paragraph starts when ready
+  
+  // Callback functions for each paragraph
+  const handleFirstParagraphComplete = useCallback(() => {
+    setCurrentParagraph(1);
+  }, []);
+  
+  const handleSecondParagraphComplete = useCallback(() => {
+    setCurrentParagraph(2);
+  }, []);
+  
+  const handleThirdParagraphComplete = useCallback(() => {
+    setCurrentParagraph(3);
+  }, []);
   const [isLoaded, setIsLoaded] = useState(false)
   const [loadingParticles, setLoadingParticles] = useState<Array<{
     left: string;
@@ -74,6 +87,10 @@ export default function ThomasBio() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true)
+      // Start typing animation after page loads
+      setTimeout(() => {
+        setCurrentParagraph(0)
+      }, 1000)
     }, 100)
     return () => clearTimeout(timer)
   }, [])
@@ -562,29 +579,29 @@ export default function ThomasBio() {
                         <TypingText 
                           text="Thomas Abebe was born in Addis Abeba, Ethiopia, and moved to the United States at the age of 10. Growing up between two cultures, he developed a deep curiosity about the world and a strong desire to contribute to it in meaningful ways. From a young age, he gravitated toward science and math—not just for their precision, but for their potential to solve real problems and improve lives."
                           speed={30}
-                          onComplete={() => setCurrentParagraph(1)}
+                          onComplete={handleFirstParagraphComplete}
                           startAnimation={currentParagraph >= 0}
                         />
                       </p>
                     </div>
                     
-                    <div className={`typing-text-container transition-all duration-500 w-full ${currentParagraph >= 1 ? 'opacity-100 mt-4 sm:mt-6' : 'opacity-0 h-0 overflow-hidden'}`}>
+                    <div className={`typing-text-container transition-all duration-500 w-full min-h-[80px] ${currentParagraph >= 1 ? 'opacity-100 mt-4 sm:mt-6' : 'opacity-0'}`}>
                       <p className="leading-relaxed break-words hyphens-auto text-justify w-full" style={{ wordWrap: 'break-word', overflowWrap: 'break-word', maxWidth: '100%', width: '100%' }}>
                         <TypingText 
                           text="That passion guided him to study Computer Science and Economics at Brown University, where he honed both his technical skills and his understanding of systems—economic, digital, and human. His career has since been grounded in technology, spanning roles as a consultant, product manager, and entrepreneur. His work reflects a constant push to bridge innovation with impact, from building and selling apps to conducting crypto research and launching ventures at the frontier of AI and blockchain."
                           speed={30}
-                          onComplete={() => setCurrentParagraph(2)}
+                          onComplete={handleSecondParagraphComplete}
                           startAnimation={currentParagraph >= 1}
                         />
                       </p>
                     </div>
                     
-                    <div className={`typing-text-container transition-all duration-500 w-full ${currentParagraph >= 2 ? 'opacity-100 mt-4 sm:mt-6' : 'opacity-0 h-0 overflow-hidden'}`}>
+                    <div className={`typing-text-container transition-all duration-500 w-full min-h-[80px] ${currentParagraph >= 2 ? 'opacity-100 mt-4 sm:mt-6' : 'opacity-0'}`}>
                       <p className="leading-relaxed break-words hyphens-auto text-justify w-full" style={{ wordWrap: 'break-word', overflowWrap: 'break-word', maxWidth: '100%', width: '100%' }}>
                         <TypingText 
                           text="Beyond technology, Thomas has a deep love for history, philosophy, art, and religion. These disciplines shape the way he thinks about the future—not just what we build, but why we build it. Today, in addition to leading a new AI-Crypto startup, he's also exploring storytelling through cinema, developing his first feature film under his new production company, Analemma Pictures."
                           speed={30}
-                          onComplete={() => setCurrentParagraph(3)}
+                          onComplete={handleThirdParagraphComplete}
                           startAnimation={currentParagraph >= 2}
                         />
                       </p>

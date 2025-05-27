@@ -27,7 +27,7 @@ export function TypingText({
   const delayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const completeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Reset animation when text changes
+  // Reset animation when text changes or startAnimation changes
   useEffect(() => {
     // Clear any existing timers
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -39,12 +39,14 @@ export function TypingText({
     setCurrentIndex(0);
     setIsTyping(false);
     setShowCursor(false);
-  }, [text]);
-
+  }, [text, startAnimation]);
+  
   // Handle the typing animation
   useEffect(() => {
-    if (!startAnimation) return;
-
+    if (!startAnimation) {
+      return;
+    }
+    
     // Start animation after delay
     delayTimeoutRef.current = setTimeout(() => {
       setShowCursor(true);
@@ -55,6 +57,7 @@ export function TypingText({
         setCurrentIndex(prevIndex => {
           if (prevIndex >= text.length) {
             // Animation complete
+
             if (intervalRef.current) {
               clearInterval(intervalRef.current);
               intervalRef.current = null;
@@ -64,6 +67,7 @@ export function TypingText({
             // Hide cursor after a short delay
             completeTimeoutRef.current = setTimeout(() => {
               setShowCursor(false);
+
               onComplete?.();
             }, 500);
             
@@ -91,7 +95,7 @@ export function TypingText({
       className={`${className}`}
       style={{ 
         display: 'inline',
-        wordWrap: 'break-word',
+        wordWrap: 'break-word', 
         overflowWrap: 'break-word',
       }}
     >
